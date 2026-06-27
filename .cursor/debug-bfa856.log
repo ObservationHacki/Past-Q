@@ -1,0 +1,2 @@
+{"sessionId":"bfa856","runId":"post-fix","hypothesisId":"H1","location":"src/app/practice/[paperId]/page.tsx:render","message":"practice page server module loaded and rendering (no webpack module error)","data":{"paperId":"c8f52175-7747-4475-bec5-4750ed57c5bc"},"timestamp":1782535824147}
+{"sessionId":"bfa856","runId":"post-fix","hypothesisId":"H1","location":"src/app/practice/[paperId]/page.tsx:render","message":"practice page server module loaded and rendering (no webpack module error)","data":{"paperId":"logo.png"},"timestamp":1782535826502}

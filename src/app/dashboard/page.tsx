@@ -134,7 +134,7 @@ export default async function DashboardPage() {
                 return (
                   <li key={item.paper_id}>
                     <Link
-                      href={`/browse?paper=${item.paper_id}`}
+                      href={`/practice/${item.paper_id}`}
                       className="flex items-center justify-between gap-4 px-4 py-3 transition-colors hover:bg-gray-50"
                     >
                       <div className="min-w-0">

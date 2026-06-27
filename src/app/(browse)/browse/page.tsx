@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import {
   getInstitutions,
   getLevels,
@@ -245,6 +246,17 @@ async function QuestionPreview({ paperId }: { paperId: string }) {
           {paper.year} · {questions.length} question
           {questions.length === 1 ? "" : "s"}
         </p>
+        {questions.length > 0 && (
+          <Link
+            href={`/practice/${paper.id}`}
+            className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-gray-900 px-3 py-1.5 text-xs font-medium text-white transition hover:bg-gray-700"
+          >
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+              <polygon points="5 3 19 12 5 21 5 3" />
+            </svg>
+            Practice this paper
+          </Link>
+        )}
       </div>
 
       {questions.length === 0 ? (

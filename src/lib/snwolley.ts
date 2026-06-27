@@ -1,13 +1,11 @@
 import "server-only";
 import type { Question } from "@/types";
 import type { GeneratedQuestion } from "@/lib/gemini";
-
-const CHAT_URL = "https://v1.snwolley.ai/v1/chat/completions";
-const CHAT_MODEL = process.env.SNWOLLEY_MODEL ?? "snwolley-chat";
-
-const RAW_API_KEY = process.env.SNWOLLEY_API_KEY?.trim();
-const API_KEY =
-  RAW_API_KEY && RAW_API_KEY !== "your-snwolley-api-key" ? RAW_API_KEY : undefined;
+import {
+  getSnwolleyCredentials,
+  isSnwolleyConfigured,
+  snwolleyAuthHeaders,
+} from "@/lib/snwolley-auth";
 
 const GHANA_CONTEXT =
   "You are an expert tutor for the Ghanaian curriculum (GES / NaCCA syllabus), " +
@@ -19,23 +17,22 @@ export interface ChatMessage {
   content: string;
 }
 
-export function isSnwolleyConfigured(): boolean {
-  return Boolean(API_KEY);
-}
+const CHAT_URL = "https://v1.snwolley.ai/v1/chat/completions";
+const CHAT_MODEL = process.env.SNWOLLEY_MODEL ?? "snwolley-chat";
+
+export { isSnwolleyConfigured };
 
 /** Calls the Snwolley (OpenAI-compatible) chat completions endpoint. */
 async function snwolleyChat(
   messages: ChatMessage[],
   options: { temperature?: number } = {},
 ): Promise<string> {
-  if (!API_KEY) throw new Error("SNWOLLEY_API_KEY is not configured.");
+  const { apiKey } = getSnwolleyCredentials();
+  if (!apiKey) throw new Error("SNWOLLEY_API_KEY is not configured.");
 
   const res = await fetch(CHAT_URL, {
     method: "POST",
-    headers: {
-      "X-API-Key": API_KEY,
-      "Content-Type": "application/json",
-    },
+    headers: snwolleyAuthHeaders({ "Content-Type": "application/json" }),
     body: JSON.stringify({
       model: CHAT_MODEL,
       messages,

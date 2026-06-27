@@ -10,11 +10,11 @@ const FALLBACK_LEVELS: Pick<Level, "name" | "slug" | "description">[] = [
   { name: "Professional", slug: "professional", description: "ICAG, GIT, licensure & more" },
 ];
 
-const LEVEL_ACCENTS: Record<string, string> = {
-  bece: "from-blue-500 to-blue-600",
-  wassce: "from-emerald-500 to-emerald-600",
-  university: "from-purple-500 to-purple-600",
-  professional: "from-orange-500 to-orange-600",
+const LEVEL_ICONS: Record<string, string> = {
+  bece: "🎓",
+  wassce: "📘",
+  university: "🏛️",
+  professional: "💼",
 };
 
 export default async function Home() {
@@ -25,40 +25,48 @@ export default async function Home() {
       : FALLBACK_LEVELS;
 
   return (
-    <div className="space-y-20 pb-16">
+    <div className="mx-auto max-w-7xl space-y-20 px-4 pb-16 pt-8 sm:px-6 lg:px-8">
       {/* Hero */}
-      <section className="pt-10 sm:pt-16">
-        <div className="flex flex-col items-center text-center">
-          <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-gray-200 bg-gray-50 px-3 py-1 text-xs font-medium text-gray-600">
-            <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-            Built for Ghanaian students
-          </span>
-          <h1 className="max-w-3xl text-4xl font-bold tracking-tight text-gray-900 sm:text-5xl">
-            Master every past question, from BECE to Professional.
-          </h1>
-          <p className="mt-5 max-w-2xl text-base text-gray-600 sm:text-lg">
-            Browse real WAEC and university past papers, practice with an AI tutor that
-            explains every answer, and even revise hands-free with voice mode.
-          </p>
+      <section className="overflow-hidden rounded-3xl bg-navy px-6 py-14 text-center sm:px-12 sm:py-16">
+        <span className="mb-5 inline-flex items-center gap-2 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/80">
+          <span className="h-1.5 w-1.5 rounded-full bg-gold" />
+          Built for Ghanaian students
+        </span>
+        <h1 className="mx-auto max-w-3xl text-4xl font-bold tracking-tight text-white sm:text-5xl">
+          Ghana&apos;s Exam Past Questions
+        </h1>
+        <p className="mx-auto mt-5 max-w-2xl text-base text-gold sm:text-lg">
+          BECE · WASSCE · University · Professional — AI-powered explanations for every answer
+        </p>
 
-          <div className="mt-8 flex w-full flex-col items-center">
-            <HeroSearch />
-          </div>
+        <div className="mt-8 flex w-full flex-col items-center">
+          <HeroSearch />
+        </div>
 
-          <div className="mt-6 flex flex-wrap items-center justify-center gap-3">
-            <Link
-              href="/browse"
-              className="rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700"
+        <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
+          {["10,000+ Questions", "20+ Years", "AI Explanations", "Free Forever"].map((stat) => (
+            <span
+              key={stat}
+              className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90"
             >
-              Start browsing
-            </Link>
-            <Link
-              href="/dashboard"
-              className="rounded-lg border border-gray-200 px-5 py-2.5 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
-            >
-              Go to dashboard
-            </Link>
-          </div>
+              {stat}
+            </span>
+          ))}
+        </div>
+
+        <div className="mt-8 flex flex-wrap items-center justify-center gap-3">
+          <Link
+            href="/browse"
+            className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-navy shadow-sm transition active:scale-95 hover:bg-gold-dark focus:ring-2 focus:ring-gold/50"
+          >
+            Start browsing
+          </Link>
+          <Link
+            href="/dashboard"
+            className="rounded-lg border border-white/30 px-5 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:bg-white/10 focus:ring-2 focus:ring-gold/50"
+          >
+            Go to dashboard
+          </Link>
         </div>
       </section>
 
@@ -66,14 +74,14 @@ export default async function Home() {
       <section>
         <div className="mb-6 flex items-end justify-between">
           <div>
-            <h2 className="text-xl font-bold tracking-tight text-gray-900">Choose your level</h2>
-            <p className="mt-1 text-sm text-gray-500">
+            <h2 className="text-xl font-bold tracking-tight text-text">Choose your level</h2>
+            <p className="mt-1 text-sm text-muted">
               Jump straight into the exams that matter to you.
             </p>
           </div>
           <Link
             href="/browse"
-            className="hidden text-sm font-medium text-gray-500 transition hover:text-gray-900 sm:block"
+            className="hidden text-sm font-medium text-muted transition hover:text-text sm:block"
           >
             Browse all →
           </Link>
@@ -84,20 +92,16 @@ export default async function Home() {
             <Link
               key={level.slug}
               href={`/browse?level=${level.slug}`}
-              className="group relative overflow-hidden rounded-2xl border border-gray-200 bg-white p-5 shadow-sm transition hover:-translate-y-0.5 hover:shadow-md"
+              className="group relative overflow-hidden rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md active:scale-[0.99]"
             >
-              <span
-                className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${
-                  LEVEL_ACCENTS[level.slug] ?? "from-gray-700 to-gray-900"
-                } text-sm font-bold text-white`}
-              >
-                {level.name.slice(0, 2).toUpperCase()}
+              <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-accent-tint text-xl">
+                {LEVEL_ICONS[level.slug] ?? "📚"}
               </span>
-              <h3 className="mt-4 text-base font-semibold text-gray-900">{level.name}</h3>
-              <p className="mt-1 line-clamp-2 text-sm text-gray-500">
+              <h3 className="mt-4 text-base font-semibold text-text">{level.name}</h3>
+              <p className="mt-1 line-clamp-2 text-sm text-muted">
                 {level.description ?? "Explore past papers and practice questions."}
               </p>
-              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-gray-900 opacity-0 transition group-hover:opacity-100">
+              <span className="mt-4 inline-flex items-center gap-1 text-sm font-medium text-gold opacity-0 transition group-hover:opacity-100">
                 Explore
                 <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M5 12h14" />
@@ -112,47 +116,47 @@ export default async function Home() {
       {/* Features */}
       <section>
         <div className="mb-6">
-          <h2 className="text-xl font-bold tracking-tight text-gray-900">
+          <h2 className="text-xl font-bold tracking-tight text-text">
             Everything you need to revise smarter
           </h2>
-          <p className="mt-1 text-sm text-gray-500">
+          <p className="mt-1 text-sm text-muted">
             Not just a question bank — a full practice companion.
           </p>
         </div>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {FEATURES.map((f) => (
-            <div key={f.title} className="rounded-2xl border border-gray-200 bg-white p-5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-900 text-white">
+            <div key={f.title} className="rounded-2xl border border-border bg-card p-5 shadow-sm transition hover:shadow-md">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-navy text-gold">
                 {f.icon}
               </div>
-              <h3 className="mt-4 text-sm font-semibold text-gray-900">{f.title}</h3>
-              <p className="mt-1 text-sm text-gray-500">{f.body}</p>
+              <h3 className="mt-4 text-sm font-semibold text-text">{f.title}</h3>
+              <p className="mt-1 text-sm text-muted">{f.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* How it works */}
-      <section className="rounded-3xl bg-gray-50 px-6 py-10 sm:px-10">
-        <h2 className="text-center text-xl font-bold tracking-tight text-gray-900">
+      <section className="rounded-3xl bg-surface px-6 py-10 sm:px-10">
+        <h2 className="text-center text-xl font-bold tracking-tight text-text">
           How PastQ works
         </h2>
         <div className="mx-auto mt-8 grid max-w-4xl grid-cols-1 gap-8 sm:grid-cols-3">
           {STEPS.map((step, i) => (
             <div key={step.title} className="text-center">
-              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gray-900 text-sm font-bold text-white">
+              <div className="mx-auto flex h-10 w-10 items-center justify-center rounded-full bg-gold text-sm font-bold text-navy">
                 {i + 1}
               </div>
-              <h3 className="mt-4 text-sm font-semibold text-gray-900">{step.title}</h3>
-              <p className="mt-1 text-sm text-gray-500">{step.body}</p>
+              <h3 className="mt-4 text-sm font-semibold text-text">{step.title}</h3>
+              <p className="mt-1 text-sm text-muted">{step.body}</p>
             </div>
           ))}
         </div>
       </section>
 
       {/* Final CTA */}
-      <section className="overflow-hidden rounded-3xl bg-gradient-to-br from-gray-900 to-gray-700 px-6 py-12 text-center text-white sm:px-12">
+      <section className="overflow-hidden rounded-3xl bg-navy px-6 py-12 text-center text-white sm:px-12">
         <h2 className="text-2xl font-bold tracking-tight sm:text-3xl">
           Ready to ace your next exam?
         </h2>
@@ -163,13 +167,13 @@ export default async function Home() {
         <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
           <Link
             href="/sign-in"
-            className="rounded-lg bg-white px-5 py-2.5 text-sm font-medium text-gray-900 transition hover:bg-gray-100"
+            className="rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-navy shadow-sm transition active:scale-95 hover:bg-gold-dark focus:ring-2 focus:ring-gold/50"
           >
             Create free account
           </Link>
           <Link
             href="/browse"
-            className="rounded-lg border border-white/30 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-white/10"
+            className="rounded-lg border border-white/30 px-5 py-2.5 text-sm font-medium text-white transition active:scale-95 hover:bg-white/10 focus:ring-2 focus:ring-gold/50"
           >
             Browse questions
           </Link>

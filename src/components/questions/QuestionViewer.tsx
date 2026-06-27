@@ -2,6 +2,8 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
+import type { PaperContext } from "@/lib/browse-data";
+import InstitutionAvatar from "@/components/ui/InstitutionAvatar";
 import VoiceExamMode from "@/components/VoiceExamMode";
 import PracticeModal from "@/components/questions/PracticeModal";
 import type { Paper, Question } from "@/types";
@@ -133,7 +135,7 @@ function StudyTopicButton({ questionId }: { questionId: string }) {
       <button
         type="button"
         onClick={() => setOpen(true)}
-        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-purple-200 bg-purple-50 px-3 py-1.5 text-sm font-medium text-purple-700 transition hover:bg-purple-100"
+        className="mt-3 inline-flex items-center gap-1.5 rounded-lg border border-gold/40 bg-accent-tint px-3 py-1.5 text-sm font-medium text-navy transition hover:bg-gold/10 active:scale-95"
       >
         <svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
           <path d="M12 2l1.9 5.1L19 9l-5.1 1.9L12 16l-1.9-5.1L5 9l5.1-1.9L12 2z" />
@@ -147,9 +149,11 @@ function StudyTopicButton({ questionId }: { questionId: string }) {
 
 export default function QuestionViewer({
   paper,
+  context,
   initialQuestions = [],
 }: {
   paper: Paper;
+  context?: PaperContext;
   /** Optional first page rendered on the server; otherwise page 0 loads on mount. */
   initialQuestions?: Question[];
 }) {
@@ -270,15 +274,39 @@ export default function QuestionViewer({
   return (
     <div className="mx-auto w-full max-w-5xl">
       <div className="lg:grid lg:grid-cols-[minmax(0,1fr)_9rem] lg:gap-8">
-        {/* Main column */}
         <div className="min-w-0">
-          <header className="mb-6">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">
-              {paper.title}
-            </h1>
-            <p className="mt-1 text-sm text-gray-500">
-              {paper.year} · {total} question{total === 1 ? "" : "s"}
-              {paper.duration_minutes ? ` · ${paper.duration_minutes} min` : ""}
+          <header className="mb-6 rounded-2xl border border-border bg-card p-4 shadow-sm sm:p-5">
+            {context && (
+              <nav className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted">
+                <span>{context.level.name}</span>
+                <span aria-hidden="true">→</span>
+                <span className="inline-flex items-center gap-1.5">
+                  <InstitutionAvatar
+                    slug={context.institution.slug}
+                    name={context.institution.name}
+                    abbreviation={context.institution.abbreviation ?? undefined}
+                    size="sm"
+                  />
+                  {context.institution.abbreviation ?? context.institution.name}
+                </span>
+                <span aria-hidden="true">→</span>
+                <span>{context.subject.name}</span>
+                <span aria-hidden="true">→</span>
+                <span className="font-semibold text-navy">{paper.year}</span>
+              </nav>
+            )}
+            <div className="flex flex-wrap items-start justify-between gap-3">
+              <h1 className="text-xl font-bold tracking-tight text-navy sm:text-2xl">
+                {paper.title}
+              </h1>
+              {paper.duration_minutes ? (
+                <span className="rounded-full bg-surface px-3 py-1 text-xs font-medium text-muted">
+                  {paper.duration_minutes} min
+                </span>
+              ) : null}
+            </div>
+            <p className="mt-1 text-sm text-muted">
+              {total} question{total === 1 ? "" : "s"}
             </p>
           </header>
 
@@ -361,7 +389,7 @@ export default function QuestionViewer({
         type="button"
         onClick={() => setVoiceOpen(true)}
         disabled={questions.length === 0}
-        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-gray-900 px-5 py-3 text-sm font-medium text-white shadow-lg transition hover:bg-gray-700 disabled:opacity-50"
+        className="fixed bottom-6 right-6 z-40 flex items-center gap-2 rounded-full bg-navy px-5 py-3 text-sm font-medium text-gold shadow-lg transition active:scale-95 hover:opacity-90 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-gold/50"
         aria-label="Start voice practice mode"
       >
         <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -410,7 +438,7 @@ function QuestionNavigator({
   return (
     <nav
       aria-label="Question navigator"
-      className="sticky top-20 rounded-xl border border-gray-200 bg-white p-3 shadow-sm"
+      className="sticky top-20 rounded-2xl border border-border bg-card p-3 shadow-sm"
     >
       <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-400">
         Questions
@@ -484,13 +512,13 @@ function QuestionHeader({ question }: { question: Question }) {
   return (
     <div className="flex items-start justify-between gap-4">
       <div className="flex items-start gap-3">
-        <span className="mt-0.5 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-gray-900 text-xs font-semibold text-white">
-          {question.number}
+        <span className="shrink-0 rounded-full bg-gold px-2.5 py-1 text-xs font-bold text-navy">
+          Q{question.number}
         </span>
-        <p className="text-base text-gray-900">{question.content}</p>
+        <p className="text-lg leading-relaxed text-text">{question.content}</p>
       </div>
-      <span className="shrink-0 rounded-md bg-gray-100 px-2 py-1 text-xs font-medium text-gray-500">
-        {question.marks} mark{question.marks === 1 ? "" : "s"}
+      <span className="shrink-0 rounded-full bg-surface px-2.5 py-1 text-xs font-medium uppercase tracking-wide text-muted">
+        {question.type}
       </span>
     </div>
   );
@@ -540,7 +568,7 @@ function McqQuestion({
   }
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <article className="rounded-2xl border border-border bg-card p-5 shadow-sm transition-shadow hover:shadow-md">
       <QuestionHeader question={question} />
 
       <div className="mt-4 grid gap-2 sm:grid-cols-2">
@@ -556,27 +584,27 @@ function McqQuestion({
               disabled={answered}
               aria-pressed={selected === key}
               className={[
-                "flex items-start gap-3 rounded-lg border p-3 text-left text-sm transition-colors",
+                "flex items-start gap-3 rounded-xl border p-3 text-left text-sm transition-all active:scale-[0.99]",
                 isCorrect
-                  ? "border-green-500 bg-green-50 text-green-800"
+                  ? "border-success bg-success-bg text-green-900"
                   : isWrongPick
-                    ? "border-red-500 bg-red-50 text-red-800"
+                    ? "border-red-400 bg-error-bg text-red-900"
                     : answered
-                      ? "border-gray-200 bg-white text-gray-400"
-                      : "border-gray-200 bg-white text-gray-700 hover:border-gray-900 hover:bg-gray-50 cursor-pointer",
+                      ? "border-border bg-card text-muted"
+                      : "cursor-pointer border-border bg-card text-text hover:border-gold/50 hover:shadow-sm",
               ].join(" ")}
             >
               <span
                 className={[
-                  "flex h-6 w-6 shrink-0 items-center justify-center rounded-md text-xs font-semibold",
+                  "flex h-7 w-7 shrink-0 items-center justify-center rounded-lg text-xs font-bold",
                   isCorrect
-                    ? "bg-green-600 text-white"
+                    ? "bg-success text-white"
                     : isWrongPick
-                      ? "bg-red-600 text-white"
-                      : "bg-gray-100 text-gray-600",
+                      ? "bg-red-500 text-white"
+                      : "bg-surface text-muted",
                 ].join(" ")}
               >
-                {key}
+                {isCorrect ? "✓" : isWrongPick ? "✗" : key}
               </span>
               <span className="pt-0.5">{value}</span>
             </button>
@@ -585,9 +613,9 @@ function McqQuestion({
       </div>
 
       {!answered && (
-        <div className="mt-4">
+        <div className="mt-4 flex flex-wrap gap-2">
           {hint ? (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+            <div className="w-full rounded-xl border border-gold/30 bg-accent-tint px-4 py-3 text-sm text-navy">
               <span className="font-semibold">Hint: </span>
               {hint}
             </div>
@@ -596,12 +624,12 @@ function McqQuestion({
               type="button"
               onClick={handleHint}
               disabled={hinting}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-60"
+              className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-text transition hover:bg-surface active:scale-95 focus:outline-none focus:ring-2 focus:ring-gold/50 disabled:opacity-60"
             >
-              {hinting ? "Thinking…" : "Get hint"}
+              {hinting ? "Thinking…" : "Get Hint"}
             </button>
           )}
-          {hintError && <p className="mt-2 text-xs text-red-600">{hintError}</p>}
+          {hintError && <p className="w-full text-xs text-red-600">{hintError}</p>}
         </div>
       )}
 
@@ -634,16 +662,16 @@ function OpenQuestion({ question }: { question: Question }) {
   }
 
   return (
-    <article className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
+    <article className="rounded-2xl border border-border bg-card p-5 shadow-sm">
       <QuestionHeader question={question} />
 
       {!revealed ? (
         <button
           type="button"
           onClick={handleReveal}
-          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gray-900 px-4 py-2 text-sm font-medium text-white transition hover:bg-gray-700"
+          className="mt-4 inline-flex items-center gap-2 rounded-lg bg-gold px-4 py-2 text-sm font-semibold text-navy shadow-sm transition active:scale-95 hover:bg-gold-dark focus:outline-none focus:ring-2 focus:ring-gold/50"
         >
-          Reveal answer
+          Check Answer
         </button>
       ) : (
         <div className="mt-4 space-y-4">
@@ -696,18 +724,22 @@ function ExplanationBlock({
   const waiting = streaming && text.length === 0;
 
   return (
-    <div className="animate-slide-in mt-4 rounded-lg border border-blue-100 bg-blue-50/60 px-4 py-3">
-      <p className={`text-sm font-semibold ${toneClasses}`}>{resultLabel}</p>
+    <div className="animate-slide-in mt-4 rounded-2xl border-l-4 border-l-gold bg-accent-tint px-4 py-4 transition-all duration-300">
+      <p className={`flex items-center gap-2 text-sm font-semibold text-gold ${toneClasses}`}>
+        <span aria-hidden="true">🤖</span>
+        AI Explanation
+      </p>
+      <p className={`mt-1 text-xs font-medium ${toneClasses}`}>{resultLabel}</p>
 
       {error ? (
         <p className="mt-2 text-sm text-red-600">{error}</p>
       ) : waiting ? (
         <div className="mt-2 space-y-2" aria-hidden="true">
-          <div className="h-3 w-full animate-pulse rounded bg-blue-100" />
-          <div className="h-3 w-3/4 animate-pulse rounded bg-blue-100" />
+          <div className="h-3 w-full animate-pulse rounded bg-gold/20" />
+          <div className="h-3 w-3/4 animate-pulse rounded bg-gold/20" />
         </div>
       ) : (
-        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-gray-700">
+        <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-text">
           {text}
           {streaming && <span className="blink-caret" aria-hidden="true" />}
         </p>

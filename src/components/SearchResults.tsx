@@ -3,6 +3,9 @@
 import { Fragment, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import type { SearchResult } from "@/app/api/search/route";
+import InstitutionAvatar from "@/components/ui/InstitutionAvatar";
+import EmptyState from "@/components/ui/EmptyState";
+import Skeleton from "@/components/ui/Skeleton";
 
 interface SearchResponse {
   query: string;
@@ -11,6 +14,13 @@ interface SearchResponse {
   page: number;
   pageSize: number;
   totalPages: number;
+}
+
+function institutionSlug(name: string): string {
+  return name
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/(^-|-$)/g, "");
 }
 
 export default function SearchResults({
@@ -25,7 +35,6 @@ export default function SearchResults({
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Stable key so the fetch effect re-runs when query or filters change.
   const filterKey = JSON.stringify(filters);
 
   useEffect(() => {
@@ -63,18 +72,18 @@ export default function SearchResults({
       .finally(() => setLoading(false));
 
     return () => controller.abort();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, filterKey, page]);
 
   const terms = useMemo(() => tokenize(query), [query]);
-
-  const groups = useMemo(() => groupBySubject(data?.results ?? []), [data]);
+  const groups = useMemo(() => groupByInstitution(data?.results ?? []), [data]);
 
   if (!query.trim()) {
     return (
-      <p className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-10 text-center text-sm text-gray-500">
-        Type a search term to find past questions.
-      </p>
+      <EmptyState
+        icon="🔍"
+        title="Search past questions"
+        message="Type a topic, subject, or keyword to find questions across BECE, WASSCE, and more."
+      />
     );
   }
 
@@ -84,7 +93,7 @@ export default function SearchResults({
 
   if (error) {
     return (
-      <p className="rounded-lg border border-red-200 bg-red-50 px-4 py-6 text-center text-sm text-red-700">
+      <p className="rounded-2xl border border-red-200 bg-error-bg px-4 py-6 text-center text-sm text-red-700">
         {error}
       </p>
     );
@@ -92,60 +101,51 @@ export default function SearchResults({
 
   if (data && data.total === 0) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white px-4 py-12 text-center">
-        <p className="text-sm font-medium text-gray-900">No results found</p>
-        <p className="mt-1 text-sm text-gray-500">
-          We couldn&apos;t find any questions matching{" "}
-          <span className="font-medium text-gray-700">
-            &ldquo;{query.trim()}&rdquo;
-          </span>
-          . Try a different keyword.
-        </p>
-      </div>
+      <EmptyState
+        title="No results found"
+        message={`We couldn't find questions matching "${query.trim()}". Try a different keyword.`}
+      />
     );
   }
 
   return (
     <div className={loading ? "opacity-60 transition-opacity" : ""}>
-      <p className="mb-4 text-sm text-gray-500">
+      <p className="mb-4 text-sm text-muted">
         {data?.total} result{data?.total === 1 ? "" : "s"} for{" "}
-        <span className="font-medium text-gray-900">
-          &ldquo;{query.trim()}&rdquo;
-        </span>
+        <span className="font-semibold text-navy">&ldquo;{query.trim()}&rdquo;</span>
       </p>
 
       <div className="space-y-8">
         {groups.map((group) => (
-          <section key={group.subjectId}>
-            <h2 className="mb-2 border-b border-gray-100 pb-1 text-sm font-semibold text-gray-900">
-              {group.subjectName}
-              <span className="ml-2 font-normal text-gray-400">
-                {group.items.length}
-              </span>
-            </h2>
+          <section key={group.institutionId}>
+            <div className="sticky top-16 z-10 -mx-1 mb-3 flex items-center gap-2 rounded-xl border border-border bg-card/95 px-3 py-2 backdrop-blur-sm">
+              <InstitutionAvatar
+                slug={group.institutionSlug}
+                name={group.institutionName}
+                size="sm"
+              />
+              <h2 className="text-sm font-bold text-navy">{group.institutionName}</h2>
+              <span className="ml-auto text-xs text-muted">{group.items.length}</span>
+            </div>
 
-            <ul className="divide-y divide-gray-100">
+            <ul className="space-y-3">
               {group.items.map((item) => (
                 <li key={item.id}>
                   <Link
-                    href={`/browse?paper=${item.paper_id}#q-${item.id}`}
-                    className="block rounded-lg px-2 py-3 transition-colors hover:bg-gray-50"
+                    href={`/practice/${item.paper_id}#question-${item.number}`}
+                    className="block rounded-2xl border border-border bg-card p-4 shadow-sm transition hover:shadow-md active:scale-[0.99]"
                   >
-                    <div className="mb-1 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs text-gray-500">
-                      <span className="font-medium text-gray-700">
-                        {item.institution_name}
+                    <div className="mb-2 flex flex-wrap items-center gap-2 text-xs">
+                      <span className="font-semibold text-text">{item.subject_name}</span>
+                      <span className="rounded-full bg-surface px-2 py-0.5 font-medium text-muted">
+                        {item.year}
                       </span>
-                      <span aria-hidden="true">·</span>
-                      <span>{item.year}</span>
-                      <span aria-hidden="true">·</span>
-                      <span className="rounded bg-gray-100 px-1.5 py-0.5 uppercase tracking-wide">
+                      <span className="rounded-full bg-accent-tint px-2 py-0.5 font-medium uppercase text-navy">
                         {item.type}
                       </span>
                     </div>
-                    <p className="text-sm leading-relaxed text-gray-700">
-                      <span className="font-medium text-gray-400">
-                        Q{item.number}.{" "}
-                      </span>
+                    <p className="text-sm leading-relaxed text-text">
+                      <span className="font-bold text-muted">Q{item.number}. </span>
                       <Highlight text={buildSnippet(item.content, terms)} terms={terms} />
                     </p>
                   </Link>
@@ -162,18 +162,18 @@ export default function SearchResults({
             type="button"
             onClick={() => setPage((p) => Math.max(1, p - 1))}
             disabled={page <= 1 || loading}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text transition hover:bg-surface active:scale-95 disabled:opacity-50"
           >
             Previous
           </button>
-          <span className="text-sm text-gray-500">
+          <span className="text-sm text-muted">
             Page {data.page} of {data.totalPages}
           </span>
           <button
             type="button"
             onClick={() => setPage((p) => Math.min(data.totalPages, p + 1))}
             disabled={page >= data.totalPages || loading}
-            className="rounded-lg border border-gray-200 px-3 py-1.5 text-sm font-medium text-gray-700 transition hover:bg-gray-50 disabled:opacity-50"
+            className="rounded-lg border border-border px-3 py-1.5 text-sm font-medium text-text transition hover:bg-surface active:scale-95 disabled:opacity-50"
           >
             Next
           </button>
@@ -183,20 +183,26 @@ export default function SearchResults({
   );
 }
 
-function groupBySubject(results: SearchResult[]) {
+function groupByInstitution(results: SearchResult[]) {
   const map = new Map<
     string,
-    { subjectId: string; subjectName: string; items: SearchResult[] }
+    {
+      institutionId: string;
+      institutionName: string;
+      institutionSlug: string;
+      items: SearchResult[];
+    }
   >();
 
   for (const result of results) {
-    const existing = map.get(result.subject_id);
+    const existing = map.get(result.institution_id);
     if (existing) {
       existing.items.push(result);
     } else {
-      map.set(result.subject_id, {
-        subjectId: result.subject_id,
-        subjectName: result.subject_name,
+      map.set(result.institution_id, {
+        institutionId: result.institution_id,
+        institutionName: result.institution_name,
+        institutionSlug: institutionSlug(result.institution_name),
         items: [result],
       });
     }
@@ -213,7 +219,6 @@ function tokenize(query: string): string[] {
     .filter((t) => t.length > 1);
 }
 
-/** Builds a ~200-char snippet centred on the first matching term. */
 function buildSnippet(content: string, terms: string[]): string {
   if (terms.length === 0 || content.length <= 200) return content;
 
@@ -246,7 +251,7 @@ function Highlight({ text, terms }: { text: string; terms: string[] }) {
     <>
       {parts.map((part, i) =>
         part && termSet.has(part.toLowerCase()) ? (
-          <mark key={i} className="rounded bg-yellow-200 px-0.5 text-gray-900">
+          <mark key={i} className="rounded bg-gold/30 px-0.5 font-medium text-navy">
             {part}
           </mark>
         ) : (
@@ -259,12 +264,12 @@ function Highlight({ text, terms }: { text: string; terms: string[] }) {
 
 function ResultsSkeleton() {
   return (
-    <div className="space-y-6" aria-hidden="true">
+    <div className="space-y-4" aria-hidden="true">
       {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="rounded-lg border border-gray-100 p-3">
-          <div className="h-2.5 w-40 animate-pulse rounded bg-gray-100" />
-          <div className="mt-3 h-3.5 w-full animate-pulse rounded bg-gray-200" />
-          <div className="mt-2 h-3.5 w-4/5 animate-pulse rounded bg-gray-200" />
+        <div key={i} className="rounded-2xl border border-border bg-card p-4">
+          <Skeleton className="mb-3 h-3 w-40" />
+          <Skeleton className="mb-2 h-4 w-full" />
+          <Skeleton className="h-4 w-4/5" />
         </div>
       ))}
     </div>

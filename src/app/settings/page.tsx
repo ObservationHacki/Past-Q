@@ -14,13 +14,13 @@ export default async function SettingsPage() {
   if (!user) {
     return (
       <div className="mx-auto max-w-md py-20 text-center">
-        <h1 className="text-xl font-bold text-gray-900">Sign in to manage settings</h1>
-        <p className="mt-2 text-sm text-gray-500">
+        <h1 className="text-xl font-bold text-text">Sign in to manage settings</h1>
+        <p className="mt-2 text-sm text-muted">
           Your account details and preferences live here.
         </p>
         <Link
           href="/sign-in?redirect=/settings"
-          className="mt-6 inline-block rounded-lg bg-gray-900 px-5 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700"
+          className="mt-6 inline-block rounded-lg bg-gold px-5 py-2.5 text-sm font-semibold text-navy shadow-sm transition active:scale-95 hover:bg-gold-dark focus:ring-2 focus:ring-gold/50"
         >
           Sign in
         </Link>
@@ -33,11 +33,11 @@ export default async function SettingsPage() {
   return (
     <div className="mx-auto w-full max-w-2xl space-y-6 py-2">
       <div>
-        <h1 className="text-xl font-bold tracking-tight text-gray-900">Settings</h1>
-        <p className="text-sm text-gray-500">Manage your PastQ account.</p>
+        <h1 className="text-xl font-bold tracking-tight text-text">Settings</h1>
+        <p className="text-sm text-muted">Manage your PastQ account.</p>
       </div>
 
-      <section className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+      <section className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
         <Row label="Full name" value={fullName} />
         <Row label="Email" value={user.email ?? "—"} />
         <Row
@@ -52,7 +52,7 @@ export default async function SettingsPage() {
 
       <Link
         href="/dashboard"
-        className="inline-block rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-800 transition hover:bg-gray-50"
+        className="inline-block rounded-lg border border-border bg-card px-4 py-2 text-sm font-medium text-text transition hover:bg-surface active:scale-95 focus:ring-2 focus:ring-gold/50"
       >
         Back to dashboard
       </Link>
@@ -62,9 +62,9 @@ export default async function SettingsPage() {
 
 function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="flex items-center justify-between gap-4 border-b border-gray-100 px-4 py-3 last:border-b-0">
-      <span className="text-sm text-gray-500">{label}</span>
-      <span className="truncate text-sm font-medium text-gray-900">{value}</span>
+    <div className="flex items-center justify-between gap-4 border-b border-border px-4 py-3 last:border-b-0">
+      <span className="text-sm text-muted">{label}</span>
+      <span className="truncate text-sm font-medium text-text">{value}</span>
     </div>
   );
 }

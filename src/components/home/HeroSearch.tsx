@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 
-const SUGGESTIONS = ["Photosynthesis", "Quadratic equations", "Osmosis", "Comprehension"];
+const SUGGESTIONS = ["WASSCE Maths 2022", "Photosynthesis", "Quadratic equations", "Osmosis"];
 
 export default function HeroSearch() {
   const router = useRouter();
@@ -23,7 +23,7 @@ export default function HeroSearch() {
   return (
     <div className="w-full max-w-xl">
       <form onSubmit={handleSubmit} role="search" className="relative">
-        <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-gray-400">
+        <span className="pointer-events-none absolute inset-y-0 left-4 flex items-center text-muted">
           <svg
             width="18"
             height="18"
@@ -43,25 +43,25 @@ export default function HeroSearch() {
           type="search"
           value={value}
           onChange={(e) => setValue(e.target.value)}
-          placeholder="Search a topic, e.g. “photosynthesis”"
-          className="w-full rounded-xl border border-gray-200 bg-white py-3.5 pl-12 pr-28 text-sm text-gray-900 shadow-sm placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          placeholder="Try 'WASSCE Maths 2022' or 'photosynthesis'"
+          className="w-full rounded-full border-0 bg-white py-3.5 pl-12 pr-28 text-sm text-text shadow-lg placeholder:text-muted focus:outline-none focus:ring-2 focus:ring-gold/50"
         />
         <button
           type="submit"
-          className="absolute inset-y-1.5 right-1.5 rounded-lg bg-gray-900 px-4 text-sm font-medium text-white transition hover:bg-gray-700"
+          className="absolute inset-y-1.5 right-1.5 rounded-full bg-gold px-4 text-sm font-semibold text-navy transition active:scale-95 hover:bg-gold-dark focus:ring-2 focus:ring-gold/50"
         >
           Search
         </button>
       </form>
 
-      <div className="mt-3 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+      <div className="mt-3 flex flex-wrap items-center justify-center gap-2 text-xs text-white/70">
         <span>Try:</span>
         {SUGGESTIONS.map((s) => (
           <button
             key={s}
             type="button"
             onClick={() => go(s)}
-            className="rounded-full border border-gray-200 bg-white px-3 py-1 font-medium text-gray-600 transition hover:border-gray-900 hover:text-gray-900"
+            className="rounded-full border border-white/20 bg-white/10 px-3 py-1 font-medium text-white/90 transition hover:bg-white/20 focus:ring-2 focus:ring-gold/50"
           >
             {s}
           </button>

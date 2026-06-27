@@ -27,10 +27,8 @@ export default async function SearchPage({
   if (sp.year) filters.year = sp.year;
 
   return (
-    <div className="mx-auto w-full max-w-3xl py-2">
-      <h1 className="mb-4 text-xl font-bold tracking-tight text-gray-900">
-        Search
-      </h1>
+    <div className="mx-auto w-full max-w-3xl px-4 py-8 sm:px-6 lg:px-8">
+      <h1 className="mb-4 text-2xl font-bold tracking-tight text-navy">Search</h1>
       <SearchResults query={query} filters={filters} />
     </div>
   );

@@ -1,12 +1,28 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #111827; /* gray-900 */
+  --background: #f4f6f8;
+  --foreground: #1e293b;
 }
 
 @theme inline {
   --font-sans: var(--font-inter);
+  --color-navy: #0d1b2a;
+  --color-gold: #f4a31b;
+  --color-gold-dark: #d4890f;
+  --color-accent-tint: #fffbeb;
+  --color-success: #16a34a;
+  --color-success-bg: #dcfce7;
+  --color-error-bg: #fee2e2;
+  --color-surface: #f4f6f8;
+  --color-card: #ffffff;
+  --color-border: #e2e8f0;
+  --color-text: #1e293b;
+  --color-muted: #64748b;
+  --color-teal: #0d9488;
+  --color-teal-tint: #f0fdfa;
+  --radius-card: 12px;
+  --radius-button: 8px;
 }
 
 html {
@@ -29,8 +45,21 @@ body {
   }
 }
 
+@keyframes pastq-fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
 .animate-slide-in {
   animation: pastq-slide-in 0.25s ease-out both;
+}
+
+.animate-page-in {
+  animation: pastq-fade-in 0.2s ease-out both;
 }
 
 @keyframes pastq-blink {

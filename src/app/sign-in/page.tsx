@@ -61,22 +61,22 @@ function SignInForm() {
       <div className="mb-6 text-center">
         <Link
           href="/"
-          className="inline-flex items-center gap-1 text-2xl font-bold tracking-tight text-gray-900"
+          className="inline-flex items-center gap-2 text-2xl font-bold tracking-tight text-navy"
         >
-          Past
-          <span className="rounded-md bg-gray-900 px-1.5 py-0.5 text-white">Q</span>
+          <span className="inline-block h-6 w-6 rounded bg-gold" aria-hidden="true" />
+          PastQ
         </Link>
-        <h1 className="mt-4 text-xl font-bold text-gray-900">
+        <h1 className="mt-4 text-xl font-bold text-text">
           {mode === "signin" ? "Sign in to PastQ" : "Create your account"}
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
+        <p className="mt-1 text-sm text-muted">
           {mode === "signin"
             ? "Track your progress, streaks and recommendations."
             : "Start practicing past questions in seconds."}
         </p>
       </div>
 
-      <form onSubmit={handleSubmit} className="space-y-3">
+      <form onSubmit={handleSubmit} className="space-y-3 rounded-2xl border border-border bg-card p-6 shadow-sm">
         {mode === "signup" && (
           <input
             type="text"
@@ -84,7 +84,7 @@ function SignInForm() {
             onChange={(e) => setFullName(e.target.value)}
             placeholder="Full name"
             autoComplete="name"
-            className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+            className="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-text placeholder:text-muted focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/50"
           />
         )}
         <input
@@ -94,7 +94,7 @@ function SignInForm() {
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Email"
           autoComplete="email"
-          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-text placeholder:text-muted focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/50"
         />
         <input
           type="password"
@@ -104,14 +104,14 @@ function SignInForm() {
           onChange={(e) => setPassword(e.target.value)}
           placeholder="Password"
           autoComplete={mode === "signin" ? "current-password" : "new-password"}
-          className="w-full rounded-lg border border-gray-200 px-3 py-2.5 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
+          className="w-full rounded-lg border border-border px-3 py-2.5 text-sm text-text placeholder:text-muted focus:border-gold focus:outline-none focus:ring-2 focus:ring-gold/50"
         />
 
         {error && (
-          <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{error}</p>
+          <p className="rounded-lg bg-error-bg px-3 py-2 text-sm text-red-700">{error}</p>
         )}
         {notice && (
-          <p className="rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+          <p className="rounded-lg bg-success-bg px-3 py-2 text-sm text-success">
             {notice}
           </p>
         )}
@@ -119,7 +119,7 @@ function SignInForm() {
         <button
           type="submit"
           disabled={loading}
-          className="w-full rounded-lg bg-gray-900 px-4 py-2.5 text-sm font-medium text-white transition hover:bg-gray-700 disabled:opacity-60"
+          className="w-full rounded-lg bg-gold px-4 py-2.5 text-sm font-semibold text-navy shadow-sm transition active:scale-95 hover:bg-gold-dark disabled:opacity-60 focus:ring-2 focus:ring-gold/50"
         >
           {loading
             ? "Please wait…"
@@ -129,7 +129,7 @@ function SignInForm() {
         </button>
       </form>
 
-      <p className="mt-4 text-center text-sm text-gray-500">
+      <p className="mt-4 text-center text-sm text-muted">
         {mode === "signin" ? "New to PastQ?" : "Already have an account?"}{" "}
         <button
           type="button"
@@ -138,7 +138,7 @@ function SignInForm() {
             setError(null);
             setNotice(null);
           }}
-          className="font-medium text-gray-900 underline underline-offset-2"
+          className="font-medium text-navy underline underline-offset-2 focus:ring-2 focus:ring-gold/50"
         >
           {mode === "signin" ? "Create an account" : "Sign in"}
         </button>

@@ -137,3 +137,71 @@ export async function getPaperWithQuestions(
 
   return { paper: paper as Paper, questions: (questions ?? []) as Question[] };
 }
+
+/** Subject counts per level slug (for browse level cards). */
+export async function getLevelSubjectCounts(): Promise<Record<string, number>> {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("subjects")
+    .select("id, courses!inner(institution_id, institutions!inner(level_id, levels!inner(slug)))");
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const slug = (row as { courses?: { institutions?: { levels?: { slug?: string } } } })
+      .courses?.institutions?.levels?.slug;
+    if (slug) counts[slug] = (counts[slug] ?? 0) + 1;
+  }
+  return counts;
+}
+
+export interface PaperContext {
+  level: { name: string; slug: string };
+  institution: { name: string; slug: string; abbreviation?: string | null };
+  subject: { name: string; slug: string };
+  paper: Paper;
+}
+
+/** Breadcrumb context for the practice / question viewer header. */
+export async function getPaperContext(paperId: string): Promise<PaperContext | null> {
+  const supabase = await createClient();
+  const { data: paper } = await supabase
+    .from("papers")
+    .select("*, subjects!inner(name, slug, courses!inner(institution_id, institutions!inner(name, slug, abbreviation, level_id, levels!inner(name, slug))))")
+    .eq("id", paperId)
+    .maybeSingle();
+
+  if (!paper) return null;
+
+  const p = paper as Paper & {
+    subjects: {
+      name: string;
+      slug: string;
+      courses: {
+        institutions: {
+          name: string;
+          slug: string;
+          abbreviation: string | null;
+          levels: { name: string; slug: string };
+        };
+      };
+    };
+  };
+
+  const inst = p.subjects.courses.institutions;
+  return {
+    level: inst.levels,
+    institution: { name: inst.name, slug: inst.slug, abbreviation: inst.abbreviation },
+    subject: { name: p.subjects.name, slug: p.subjects.slug },
+    paper: {
+      id: p.id,
+      subject_id: p.subject_id,
+      year: p.year,
+      title: p.title,
+      description: p.description,
+      total_questions: p.total_questions,
+      duration_minutes: p.duration_minutes,
+      created_at: p.created_at,
+      updated_at: p.updated_at,
+    },
+  };
+}

@@ -20,7 +20,7 @@ interface ChatMessage {
 }
 
 function authHeaders(extra: Record<string, string> = {}): HeadersInit {
-  return { Authorization: `Bearer ${API_KEY}`, ...extra };
+  return { "X-API-Key": API_KEY!, ...extra };
 }
 
 export async function POST(request: Request) {

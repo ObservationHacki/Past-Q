@@ -33,7 +33,7 @@ async function snwolleyChat(
   const res = await fetch(CHAT_URL, {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${API_KEY}`,
+      "X-API-Key": API_KEY,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({

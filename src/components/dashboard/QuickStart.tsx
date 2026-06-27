@@ -12,7 +12,7 @@ export default function QuickStart({
   const [loading, setLoading] = useState(false);
 
   function handleContinue() {
-    if (continuePaperId) router.push(`/browse?paper=${continuePaperId}`);
+    if (continuePaperId) router.push(`/practice/${continuePaperId}`);
   }
 
   async function handleRandom() {
@@ -20,7 +20,7 @@ export default function QuickStart({
     try {
       const res = await fetch("/api/random-paper");
       const data = (await res.json()) as { paperId: string | null };
-      if (data.paperId) router.push(`/browse?paper=${data.paperId}`);
+      if (data.paperId) router.push(`/practice/${data.paperId}`);
     } finally {
       setLoading(false);
     }

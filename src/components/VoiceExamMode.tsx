@@ -54,8 +54,11 @@ export default function VoiceExamMode({
 
   const streamRef = useRef<MediaStream | null>(null);
   const recorderRef = useRef<MediaRecorder | null>(null);
+  const recognitionRef = useRef<SpeechRecognition | null>(null);
   const chunksRef = useRef<Blob[]>([]);
   const audioRef = useRef<HTMLAudioElement | null>(null);
+  const [voiceSource, setVoiceSource] = useState<"snwolley" | "browser">("snwolley");
+  const [voiceNotice, setVoiceNotice] = useState<string | null>(null);
 
   const question = questions[index];
 
@@ -76,31 +79,65 @@ export default function VoiceExamMode({
   const speak = useCallback(
     async (text: string) => {
       stopAudio();
+      if (voiceSource === "browser") {
+        await speakBrowser(text);
+        return;
+      }
+
       const res = await fetch("/api/voice?action=tts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ text }),
       });
-      if (!res.ok) throw new Error("Could not play audio.");
 
-      const blob = await res.blob();
-      const url = URL.createObjectURL(blob);
-      const audio = new Audio(url);
-      audioRef.current = audio;
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = URL.createObjectURL(blob);
+        const audio = new Audio(url);
+        audioRef.current = audio;
 
-      await new Promise<void>((resolve) => {
-        audio.onended = () => {
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        audio.onerror = () => {
-          URL.revokeObjectURL(url);
-          resolve();
-        };
-        audio.play().catch(() => resolve());
-      });
+        await new Promise<void>((resolve) => {
+          audio.onended = () => {
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          audio.onerror = () => {
+            URL.revokeObjectURL(url);
+            resolve();
+          };
+          audio.play().catch(() => resolve());
+        });
+        return;
+      }
+
+      // Snwolley credentials rejected — fall back to browser speech for demo continuity.
+      if (res.status === 401 || res.status === 503) {
+        // #region agent log
+        fetch("http://127.0.0.1:7511/ingest/ebbb6bca-986c-454c-8843-d0ab41f45d96", {
+          method: "POST",
+          headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "bfa856" },
+          body: JSON.stringify({
+            sessionId: "bfa856",
+            runId: "post-fix",
+            hypothesisId: "H6",
+            location: "VoiceExamMode.tsx:speak",
+            message: "tts fallback to browser",
+            data: { status: res.status },
+            timestamp: Date.now(),
+          }),
+        }).catch(() => {});
+        // #endregion
+        setVoiceSource("browser");
+        setVoiceNotice(
+          "Snwolley voice is unavailable — using your browser's built-in speech instead.",
+        );
+        await speakBrowser(text);
+        return;
+      }
+
+      throw new Error("Could not play audio.");
     },
-    [stopAudio],
+    [stopAudio, voiceSource],
   );
 
   const readQuestion = useCallback(async () => {
@@ -127,6 +164,7 @@ export default function VoiceExamMode({
     return () => {
       stopAudio();
       if (recorderRef.current?.state === "recording") recorderRef.current.stop();
+      recognitionRef.current?.abort();
       streamRef.current?.getTracks().forEach((t) => t.stop());
     };
   }, [stopAudio]);
@@ -145,6 +183,11 @@ export default function VoiceExamMode({
   }
 
   function startRecording() {
+    if (voiceSource === "browser") {
+      startBrowserRecording();
+      return;
+    }
+
     const stream = streamRef.current;
     if (!stream) return;
 
@@ -168,8 +211,75 @@ export default function VoiceExamMode({
   }
 
   function stopRecording() {
+    if (voiceSource === "browser") {
+      recognitionRef.current?.stop();
+      return;
+    }
     if (recorderRef.current?.state === "recording") {
       recorderRef.current.stop();
+    }
+  }
+
+  function startBrowserRecording() {
+    stopAudio();
+    const Recognition = getSpeechRecognition();
+    if (!Recognition) {
+      setError("Browser speech recognition is not supported here. Try Chrome or Edge.");
+      return;
+    }
+
+    const recognition = new Recognition();
+    recognition.lang = "en-GB";
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    recognitionRef.current = recognition;
+
+    recognition.onresult = (event) => {
+      const transcript = event.results[0]?.[0]?.transcript ?? "";
+      void finishAnswer(transcript);
+    };
+    recognition.onerror = (event) => {
+      if (event.error !== "aborted") {
+        setError(`Speech recognition error: ${event.error}`);
+      }
+      setStatus("ready");
+    };
+    recognition.onend = () => {
+      setStatus((current) => (current === "recording" ? "ready" : current));
+    };
+
+    try {
+      recognition.start();
+      setStatus("recording");
+    } catch {
+      setError("Could not start browser speech recognition.");
+      setStatus("ready");
+    }
+  }
+
+  async function finishAnswer(transcript: string) {
+    if (!transcript.trim()) {
+      setError("I couldn't hear an answer. Please try recording again.");
+      setStatus("ready");
+      return;
+    }
+    addBubble("student", transcript);
+
+    setStatus("evaluating");
+    try {
+      const feedback = await evaluate(question, transcript, voiceSource);
+      addBubble("feedback", feedback);
+
+      setStatus("speaking");
+      try {
+        await speak(feedback);
+      } catch {
+        /* feedback text already visible */
+      }
+      setStatus("ready");
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Something went wrong.");
+      setStatus("ready");
     }
   }
 
@@ -180,25 +290,13 @@ export default function VoiceExamMode({
 
     setStatus("transcribing");
     try {
-      const transcript = await transcribe(blob);
-      if (!transcript.trim()) {
-        setError("I couldn't hear an answer. Please try recording again.");
-        setStatus("ready");
-        return;
-      }
-      addBubble("student", transcript);
-
-      setStatus("evaluating");
-      const feedback = await evaluate(question, transcript);
-      addBubble("feedback", feedback);
-
-      setStatus("speaking");
-      try {
-        await speak(feedback);
-      } catch {
-        // Feedback text is already shown; ignore TTS failure.
-      }
-      setStatus("ready");
+      const transcript = await transcribe(blob, () => {
+        setVoiceSource("browser");
+        setVoiceNotice(
+          "Snwolley voice is unavailable — using your browser's built-in speech instead.",
+        );
+      });
+      await finishAnswer(transcript);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong.");
       setStatus("ready");
@@ -259,6 +357,11 @@ export default function VoiceExamMode({
 
         {/* Status + error */}
         <div className="border-t border-gray-200 px-4 pt-3">
+          {voiceNotice ? (
+            <p className="mb-2 rounded-lg bg-amber-50 px-3 py-2 text-xs text-amber-800">
+              {voiceNotice}
+            </p>
+          ) : null}
           {error ? (
             <p className="mb-2 rounded-lg bg-red-50 px-3 py-2 text-xs text-red-700">
               {error}
@@ -437,17 +540,50 @@ function buildEvalMessages(question: Question, transcript: string): ChatMessage[
   ];
 }
 
-async function transcribe(blob: Blob): Promise<string> {
+async function transcribe(
+  blob: Blob,
+  onSnwolleyUnavailable?: () => void,
+): Promise<string> {
   const form = new FormData();
   form.append("audio", blob, "answer.webm");
 
   const res = await fetch("/api/voice?action=stt", { method: "POST", body: form });
   const data = (await res.json().catch(() => ({}))) as { text?: string; error?: string };
-  if (!res.ok) throw new Error(data.error ?? "Could not transcribe your answer.");
-  return data.text ?? "";
+  // #region agent log
+  fetch("http://127.0.0.1:7511/ingest/ebbb6bca-986c-454c-8843-d0ab41f45d96", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", "X-Debug-Session-Id": "bfa856" },
+    body: JSON.stringify({
+      sessionId: "bfa856",
+      runId: "post-fix",
+      hypothesisId: "H4",
+      location: "VoiceExamMode.tsx:transcribe",
+      message: "client stt response",
+      data: { status: res.status, ok: res.ok, error: data.error ?? null, blobSize: blob.size },
+      timestamp: Date.now(),
+    }),
+  }).catch(() => {});
+  // #endregion
+
+  if (res.ok) return data.text ?? "";
+
+  if ((res.status === 401 || res.status === 503) && getSpeechRecognition()) {
+    onSnwolleyUnavailable?.();
+    throw new Error("Please tap Record answer again — browser speech is now active.");
+  }
+
+  throw new Error(data.error ?? "Could not transcribe your answer.");
 }
 
-async function evaluate(question: Question, transcript: string): Promise<string> {
+async function evaluate(
+  question: Question,
+  transcript: string,
+  voiceSource: "snwolley" | "browser",
+): Promise<string> {
+  if (voiceSource === "browser") {
+    return evaluateLocal(question, transcript);
+  }
+
   const res = await fetch("/api/voice?action=chat", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
@@ -457,8 +593,74 @@ async function evaluate(question: Question, transcript: string): Promise<string>
     content?: string;
     error?: string;
   };
-  if (!res.ok || !data.content) {
-    throw new Error(data.error ?? "Could not evaluate your answer.");
+
+  if (res.ok && data.content) return data.content;
+
+  if (res.status === 401 || res.status === 503) {
+    return evaluateLocal(question, transcript);
   }
-  return data.content;
+
+  throw new Error(data.error ?? "Could not evaluate your answer.");
+}
+
+function evaluateLocal(question: Question, transcript: string): string {
+  const said = transcript.trim().toLowerCase();
+
+  if (question.type === "mcq" && question.answer) {
+    const correct = question.answer.trim().toUpperCase();
+    const letterMatch = said.match(/\b([a-d])\b/i);
+    const picked = letterMatch?.[1]?.toUpperCase();
+
+    if (question.options && !picked) {
+      for (const [key, value] of Object.entries(question.options)) {
+        if (said.includes(String(value).toLowerCase())) {
+          if (key.toUpperCase() === correct) {
+            return `Correct! ${correct} is right.${question.explanation ? ` ${question.explanation}` : ""}`;
+          }
+          return `Not quite. The correct answer is ${correct}.${question.explanation ? ` ${question.explanation}` : ""}`;
+        }
+      }
+    }
+
+    if (picked === correct) {
+      return `Correct! ${correct} is the right answer.${question.explanation ? ` ${question.explanation}` : ""}`;
+    }
+    if (picked) {
+      return `Not quite — you said ${picked}, but the correct answer is ${correct}.${question.explanation ? ` ${question.explanation}` : ""}`;
+    }
+    return `I heard "${transcript}". The correct answer is ${correct}.${question.explanation ? ` ${question.explanation}` : ""}`;
+  }
+
+  const marks = question.marks ?? 1;
+  return (
+    `Thanks for attempting this ${question.type} question (${marks} mark${marks === 1 ? "" : "s"}). ` +
+    `Compare your spoken answer with the model solution when you review the paper.` +
+    (question.explanation ? ` Key point: ${question.explanation}` : "")
+  );
+}
+
+function speakBrowser(text: string): Promise<void> {
+  return new Promise((resolve) => {
+    if (typeof window === "undefined" || !window.speechSynthesis) {
+      resolve();
+      return;
+    }
+    window.speechSynthesis.cancel();
+    const utterance = new SpeechSynthesisUtterance(text);
+    utterance.lang = "en-GB";
+    utterance.onend = () => resolve();
+    utterance.onerror = () => resolve();
+    window.speechSynthesis.speak(utterance);
+  });
+}
+
+type SpeechRecognitionCtor = new () => SpeechRecognition;
+
+function getSpeechRecognition(): SpeechRecognitionCtor | null {
+  if (typeof window === "undefined") return null;
+  const w = window as Window & {
+    SpeechRecognition?: SpeechRecognitionCtor;
+    webkitSpeechRecognition?: SpeechRecognitionCtor;
+  };
+  return w.SpeechRecognition ?? w.webkitSpeechRecognition ?? null;
 }

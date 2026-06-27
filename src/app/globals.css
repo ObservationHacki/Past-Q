@@ -17,3 +17,36 @@ body {
   background: var(--background);
   color: var(--foreground);
 }
+
+@keyframes pastq-slide-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-in {
+  animation: pastq-slide-in 0.25s ease-out both;
+}
+
+@keyframes pastq-blink {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+.blink-caret {
+  display: inline-block;
+  width: 0.45ch;
+  margin-left: 1px;
+  background: currentColor;
+  animation: pastq-blink 1s step-end infinite;
+}

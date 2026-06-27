@@ -131,7 +131,7 @@ create table if not exists public.questions (
   created_at  timestamptz not null default now(),
   updated_at  timestamptz not null default now(),
   -- Full-text search vector, generated from the question content.
-  content_search tsvector generated always as (to_tsvector('english', coalesce(content, ''))) stored,
+  search_vector tsvector generated always as (to_tsvector('english', coalesce(content, ''))) stored,
   unique (paper_id, number)
 );
 
@@ -155,8 +155,8 @@ create index if not exists idx_papers_year         on public.papers (subject_id,
 create index if not exists idx_questions_type      on public.questions (type);
 
 -- Full-text search (GIN over the generated tsvector)
-create index if not exists idx_questions_content_search
-  on public.questions using gin (content_search);
+create index if not exists idx_questions_search_vector
+  on public.questions using gin (search_vector);
 
 -- ============================================================================
 -- updated_at TRIGGERS

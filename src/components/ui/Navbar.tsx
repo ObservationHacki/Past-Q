@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { useRouter, useSearchParams } from "next/navigation";
 import { useEffect, useRef, useState } from "react";
 import type { User } from "@supabase/supabase-js";
 import { createClient } from "@/lib/supabase/client";
@@ -146,7 +147,7 @@ export default function Navbar() {
       {/* Mobile panel */}
       {mobileOpen && (
         <div className="border-t border-gray-200 bg-white px-4 py-4 md:hidden">
-          <SearchInput className="w-full" />
+          <SearchInput className="w-full" onNavigate={() => setMobileOpen(false)} />
           <div className="mt-4">
             {loading ? (
               <div className="h-10 w-full animate-pulse rounded-lg bg-gray-100" />
@@ -201,18 +202,50 @@ export default function Navbar() {
   );
 }
 
-function SearchInput({ className = "" }: { className?: string }) {
+function SearchInput({
+  className = "",
+  onNavigate,
+}: {
+  className?: string;
+  onNavigate?: () => void;
+}) {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const [value, setValue] = useState(() => searchParams.get("q") ?? "");
+
+  // Debounced live search: navigate to /search 300ms after typing stops.
+  useEffect(() => {
+    const trimmed = value.trim();
+    if (!trimmed) return;
+
+    const timer = setTimeout(() => {
+      router.replace(`/search?q=${encodeURIComponent(trimmed)}`);
+    }, 300);
+
+    return () => clearTimeout(timer);
+  }, [value, router]);
+
+  function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    const trimmed = value.trim();
+    if (!trimmed) return;
+    router.push(`/search?q=${encodeURIComponent(trimmed)}`);
+    onNavigate?.();
+  }
+
   return (
-    <div className={`relative ${className}`}>
+    <form onSubmit={handleSubmit} role="search" className={`relative ${className}`}>
       <span className="pointer-events-none absolute inset-y-0 left-3 flex items-center text-gray-400">
         <SearchIcon />
       </span>
       <input
         type="search"
+        value={value}
+        onChange={(e) => setValue(e.target.value)}
         placeholder="Search past questions, subjects, papers…"
         className="w-full rounded-lg border border-gray-200 bg-gray-50 py-2 pl-10 pr-3 text-sm text-gray-900 placeholder:text-gray-400 focus:border-gray-900 focus:bg-white focus:outline-none focus:ring-1 focus:ring-gray-900"
       />
-    </div>
+    </form>
   );
 }
 

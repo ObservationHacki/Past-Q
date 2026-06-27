@@ -255,7 +255,7 @@ async function QuestionPreview({ paperId }: { paperId: string }) {
       ) : (
         <ol className="divide-y divide-gray-100">
           {questions.map((q) => (
-            <li key={q.id} className="px-4 py-3">
+            <li key={q.id} id={`q-${q.id}`} className="scroll-mt-4 px-4 py-3">
               <div className="flex items-baseline gap-2">
                 <span className="text-xs font-semibold text-gray-400">
                   {q.number}.

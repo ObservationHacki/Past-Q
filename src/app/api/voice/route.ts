@@ -7,7 +7,11 @@ const STT_URL = "https://v1.snwolley.ai/api/v1/hackathon/stt";
 const TTS_URL = "https://v1.snwolley.ai/api/v1/hackathon/tts";
 const CHAT_URL = "https://v1.snwolley.ai/v1/chat/completions";
 
-const API_KEY = process.env.SNWOLLEY_API_KEY;
+const RAW_API_KEY = process.env.SNWOLLEY_API_KEY?.trim();
+// Treat the template placeholder as "not configured" so the UI shows a clear
+// message instead of sending an invalid token upstream.
+const API_KEY =
+  RAW_API_KEY && RAW_API_KEY !== "your-snwolley-api-key" ? RAW_API_KEY : undefined;
 const CHAT_MODEL = process.env.SNWOLLEY_MODEL ?? "snwolley-chat";
 
 interface ChatMessage {
@@ -22,8 +26,11 @@ function authHeaders(extra: Record<string, string> = {}): HeadersInit {
 export async function POST(request: Request) {
   if (!API_KEY) {
     return NextResponse.json(
-      { error: "SNWOLLEY_API_KEY is not configured on the server." },
-      { status: 500 },
+      {
+        error:
+          "Voice mode needs a Snwolley API key. Add SNWOLLEY_API_KEY to .env.local and restart the dev server.",
+      },
+      { status: 503 },
     );
   }
 

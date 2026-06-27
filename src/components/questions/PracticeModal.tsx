@@ -17,6 +17,7 @@ export default function PracticeModal({
   onClose: () => void;
 }) {
   const [questions, setQuestions] = useState<GeneratedQuestion[] | null>(null);
+  const [source, setSource] = useState<"ai" | "library">("ai");
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -32,10 +33,11 @@ export default function PracticeModal({
       .then(async (res) => {
         const json = await res.json();
         if (!res.ok) throw new Error(json.error ?? "Failed to generate questions.");
-        return json as { questions: GeneratedQuestion[] };
+        return json as { questions: GeneratedQuestion[]; source?: "ai" | "library" };
       })
       .then((json) => {
         setQuestions(json.questions);
+        setSource(json.source ?? "ai");
         setLoading(false);
       })
       .catch((err: unknown) => {
@@ -53,7 +55,7 @@ export default function PracticeModal({
         <div className="flex items-center justify-between border-b border-gray-200 px-4 py-3">
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-gray-900">Bonus practice</p>
-            <AiBadge />
+            {!loading && !error && <SourceBadge source={source} />}
           </div>
           <button
             type="button"
@@ -140,7 +142,18 @@ function PracticeCard({
   );
 }
 
-function AiBadge() {
+function SourceBadge({ source }: { source: "ai" | "library" }) {
+  if (source === "library") {
+    return (
+      <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-blue-700">
+        <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+          <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2Z" />
+        </svg>
+        From question bank
+      </span>
+    );
+  }
   return (
     <span className="inline-flex items-center gap-1 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide text-purple-700">
       <svg width="10" height="10" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">

@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { generatePracticeQuestions, type GeneratedQuestion } from "@/lib/gemini";
+import type { GeneratedQuestion } from "@/lib/gemini";
+import { aiPractice } from "@/lib/ai";
 import type { Question } from "@/types";
 
 interface PracticeRequestBody {
@@ -81,7 +82,7 @@ export async function POST(request: Request) {
   // Prefer AI-generated questions; fall back to the question bank if the AI
   // call fails (e.g. Gemini quota/rate limit) or returns nothing.
   try {
-    const questions = await generatePracticeQuestions(question);
+    const questions = await aiPractice(question);
     if (questions.length > 0) {
       return NextResponse.json({ questions, source: "ai" });
     }

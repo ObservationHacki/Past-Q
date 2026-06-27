@@ -90,13 +90,15 @@ async function handleStt(request: Request) {
     );
   }
 
-  // Normalize across likely response shapes.
+  // Normalize across likely response shapes (Snwolley / bridge APIs vary).
   const text =
     data?.text ??
     data?.transcript ??
     data?.transcription ??
     data?.result ??
     data?.data?.text ??
+    data?.results?.[0]?.alternatives?.[0]?.transcript ??
+    data?.alternatives?.[0]?.transcript ??
     (typeof data === "string" ? data : "");
 
   return NextResponse.json({ text: typeof text === "string" ? text.trim() : "" });

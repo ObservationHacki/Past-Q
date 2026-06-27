@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { createClient } from "@/lib/supabase/server";
-import { explainAnswer, streamExplanation, type ExplainMode } from "@/lib/gemini";
+import type { ExplainMode } from "@/lib/gemini";
+import { aiExplain } from "@/lib/ai";
 import type { Question } from "@/types";
 
 interface ExplainRequestBody {
@@ -78,10 +79,10 @@ export async function POST(request: Request) {
   }
 
   // Hints are short — return them as plain JSON. Fall back to a safe generic
-  // hint if the AI is unavailable (e.g. Gemini quota exhausted).
+  // hint if no AI provider is available.
   if (mode === "hint") {
     try {
-      const explanation = await explainAnswer({ question, studentAnswer, mode: "hint" });
+      const explanation = await aiExplain(question, studentAnswer ?? null, "hint");
       return NextResponse.json({ explanation });
     } catch (err) {
       console.error("hint generation failed, using fallback hint:", err);
@@ -89,25 +90,23 @@ export async function POST(request: Request) {
     }
   }
 
-  // Explanations stream token-by-token for an instant feel. If the AI yields
-  // nothing or errors, stream the stored explanation so the card is never empty.
+  // Explanation: get the text from the AI provider (Snwolley → Gemini), then
+  // drip it to the client so the typewriter effect still plays. If every
+  // provider fails, stream the stored explanation so the card is never empty.
   const encoder = new TextEncoder();
-  const fallback = buildFallbackExplanation(question, studentAnswer ?? null);
+  let text: string;
+  try {
+    text = await aiExplain(question, studentAnswer ?? null, "explain");
+  } catch (err) {
+    console.error("explanation failed, using stored fallback:", err);
+    text = buildFallbackExplanation(question, studentAnswer ?? null);
+  }
+
   const stream = new ReadableStream<Uint8Array>({
-    async start(controller) {
-      let emitted = false;
-      try {
-        for await (const chunk of streamExplanation({ question, studentAnswer })) {
-          if (chunk) {
-            emitted = true;
-            controller.enqueue(encoder.encode(chunk));
-          }
-        }
-      } catch (err) {
-        console.error("explanation stream failed, using stored fallback:", err);
-      }
-      if (!emitted) {
-        controller.enqueue(encoder.encode(fallback));
+    start(controller) {
+      // Chunk into ~6-char slices so the client's typewriter reveal stays smooth.
+      for (let i = 0; i < text.length; i += 6) {
+        controller.enqueue(encoder.encode(text.slice(i, i + 6)));
       }
       controller.close();
     },
